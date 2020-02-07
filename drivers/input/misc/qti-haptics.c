@@ -62,6 +62,14 @@ enum haptics_custom_effect_param {
 	CUSTOM_DATA_LEN,
 };
 
+#ifdef CONFIG_HAPTIC_FEEDBACK_DISABLE
+int ignore_next_request = 0;
+void hap_ignore_next_request(void)
+{
+    ignore_next_request = 1;
+}
+#endif
+
 #define REG_HAP_LRA_AUTO_RES	0x0B
 /* common definitions */
 #define HAP_BRAKE_PATTERN_MAX		4
@@ -459,6 +467,13 @@ static int qti_haptics_play(struct qti_hap_chip *chip, bool play)
 {
 	int rc = 0;
 	u8 val = play ? HAP_PLAY_BIT : 0;
+
+#ifdef CONFIG_HAPTIC_FEEDBACK_DISABLE
+    if ((ignore_next_request) && (val != 0)) {
+       ignore_next_request = 0;
+       return 0;
+    }
+#endif
 
 	rc = qti_haptics_write(chip,
 			REG_HAP_PLAY, &val, 1);
