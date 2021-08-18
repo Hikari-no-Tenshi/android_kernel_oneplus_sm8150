@@ -13,7 +13,6 @@
 #include <linux/string.h>
 #include <linux/security.h>
 #include <linux/delay.h>
-#include <linux/userland.h>
 
 #include "../security/selinux/include/security.h"
 
@@ -25,8 +24,6 @@
 static char** argv;
 
 static struct delayed_work userland_work;
-
-unsigned int is_stock;
 
 static void free_memory(char** argv, int size)
 {
@@ -166,7 +163,14 @@ static void enable_blur(void) {
 }
 
 static void set_kernel_module_params(void) {
-	is_stock = !linux_test("/system/etc/buildinfo/oem_build.prop");
+	int ret = linux_test("/system/etc/buildinfo/oem_build.prop");
+	if (!ret) { // OxygenOS
+		linux_sh("/system/bin/echo 1 > /sys/module/msm_drm/parameters/is_stock");
+		linux_sh("/system/bin/echo 0 > /sys/module/smb5_lib/parameters/pd_active");
+	} else { // Custom ROM
+		linux_sh("/system/bin/echo 0 > /sys/module/msm_drm/parameters/is_stock");
+		linux_sh("/system/bin/echo 1 > /sys/module/smb5_lib/parameters/pd_active");
+	}
 }
 
 static void userland_worker(struct work_struct *work)
@@ -185,12 +189,17 @@ static void userland_worker(struct work_struct *work)
 		set_selinux(0);
 	}
 
+  	msleep(DELAY);
+
 	vbswap_help();
-	msleep(DELAY);
-	dalvikvm_set();
-	set_kernel_module_params();
-	enable_blur();
+
 	fix_sensors();
+
+	dalvikvm_set();
+
+	enable_blur();
+
+	set_kernel_module_params();
 
 	if (is_enforcing) {
 		pr_info("Going enforcing");
