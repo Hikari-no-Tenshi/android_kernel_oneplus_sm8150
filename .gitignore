@@ -133,8 +133,3 @@ kernel/configs/android-*.cfg
 Android.bp
 
 kernelzip/
-*.log
-*.txt
-*.py
-*.sh
-out/
