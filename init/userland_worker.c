@@ -146,10 +146,7 @@ static void dalvikvm_set(void) {
 	}
 	linux_write("dalvik.vm.heapsize", "512m", false);
 	linux_write("dalvik.vm.heapminfree", "8m", false);
-}
 
-static void enable_blur(void) {
-	linux_write("ro.surface_flinger.supports_background_blur", "1", false);
 }
 
 static void userland_worker(struct work_struct *work)
@@ -175,8 +172,6 @@ static void userland_worker(struct work_struct *work)
 	fix_sensors();
 
 	dalvikvm_set();
-
-	enable_blur();
 
 	if (is_enforcing) {
 		pr_info("Going enforcing");
